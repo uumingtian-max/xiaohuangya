@@ -1,21 +1,24 @@
-from __future__ import annotations
+"""Request/response models for the sihan-live API."""
 
-from typing import Literal
+from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
 
+class HealthResponse(BaseModel):
+    status: str
+    app: str
+
+
 class IngestRequest(BaseModel):
-    source_path: str = Field(..., description="Directory or file path to ingest.")
-    recursive: bool = Field(default=True)
-    allowed_extensions: list[str] = Field(
-        default_factory=lambda: [".txt", ".md", ".json", ".csv", ".log"]
-    )
+    path: str = Field(..., description="Directory or file path to ingest (must be under an allowed root).")
+    recursive: bool = Field(default=True, description="Recurse into subdirectories when path is a directory.")
 
 
 class IngestResponse(BaseModel):
-    indexed_files: int
-    indexed_chunks: int
+    documents_added: int
+    chunks_added: int
+    skipped_files: int
     storage_path: str
 
 
@@ -25,23 +28,28 @@ class SearchRequest(BaseModel):
 
 
 class SearchHit(BaseModel):
+    content: str
     source: str
     score: float
-    snippet: str
 
 
 class SearchResponse(BaseModel):
     query: str
-    total_hits: int
-    hits: list[SearchHit]
+    results: list[SearchHit]
 
 
 class ChatRequest(BaseModel):
     message: str
     top_k: int = Field(default=4, ge=1, le=20)
-    mode: Literal["chat", "search_only"] = "chat"
 
 
 class ChatResponse(BaseModel):
-    answer: str
+    reply: str
+    state: str
+    context_used: int
     references: list[SearchHit]
+
+
+class StatsResponse(BaseModel):
+    chunks: int
+    sources: int
